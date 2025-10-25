@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 'Ejecutar Dependency-Check (SCA)'
-        uses: dependency-check/dependency-check-action@v3
+        uses: owasp/dependency-check-action@v5
         id: scan
         with:
           project: 'devsecops-laboratorio'
