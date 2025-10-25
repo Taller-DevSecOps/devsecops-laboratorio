@@ -1,0 +1,113 @@
+name: 'Pipeline de Seguridad'
+
+on:
+  push:
+    branches-ignore:
+      - 'lab-devdescops'
+      
+  workflow_dispatch:
+
+jobs:
+  sast-sonarcloud:
+    name: '1. Revisar Código (SAST)'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Clonando el repositorio'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Configurar Java 17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 'Cache de Sonar'
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: 'Cache de Maven (proyecto Java)'
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: 'Ejecutar Analisis y Quality Gate de SonarCloud'
+        uses: SonarSource/sonarcloud-github-action@master
+        
+        continue-on-error: true
+        
+        env:
+          SONAR_TOKEN: ${{ secrets.LAB_DEVSECOPS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=parmijot
+            -Dsonar.projectKey=parmijot_devsecops-laboratorio
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+  sca-dependency-check:
+    name: '2. Revisar Dependencias (SCA)'
+    needs: sast-sonarcloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Clonando el repositorio'
+        uses: actions/checkout@v4
+
+      - name: 'Ejecutar Dependency-Check (SCA)'
+        uses: dependency-check/scan@v3
+        id: scan
+        with:
+          project: 'devsecops-laboratorio'
+          path: '.'
+          format: 'SARIF'
+          output: 'reports'
+          
+          fail-on-cvss: 4
+          
+        continue-on-error: true
+
+      - name: 'Subir reporte SARIF a la pestaña Security'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/dependency-check-report.sarif
+
+  build-and-scan-image:
+    name: '3. Build Docker y Scan con Trivy'
+    needs: sca-dependency-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Clonando el repositorio'
+        uses: actions/checkout@v4
+
+      - name: 'Configurar QEMU'
+        uses: docker/setup-qemu-action@v3
+      - name: 'Configurar Docker Buildx'
+        uses: docker/setup-buildx-action@v3
+
+      - name: 'Construir imagen Docker'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: ImagenEscaneada:latest
+
+      - name: 'Escanear imagen con Trivy'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ImagenEscaneada:latest'
+          format: 'table'
+
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          exit-code: '1'
+
+        continue-on-error: true
