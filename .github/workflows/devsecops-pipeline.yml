@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 'Ejecutar Dependency-Check (SCA)'
-        uses: owasp/dependency-check-action@v6
+        uses: dependency-check/Dependency-Check_Action@main
         id: scan
         with:
           project: 'devsecops-laboratorio'
@@ -101,3 +101,4 @@ jobs:
           severity: 'MEDIUM,HIGH,CRITICAL'
           exit-code: '1'
         continue-on-error: true
+
