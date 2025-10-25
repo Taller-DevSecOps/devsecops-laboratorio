@@ -1,10 +1,11 @@
 name: 'Pipeline de Seguridad'
 
 on:
-  push:
-    branches-ignore:
-      - 'lab-devdescops'
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - 'lab-devdescops'
 
 jobs:
   sast-sonarcloud:
