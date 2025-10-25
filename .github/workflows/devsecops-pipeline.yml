@@ -4,14 +4,12 @@ on:
   push:
     branches-ignore:
       - 'lab-devdescops'
-      
   workflow_dispatch:
 
 jobs:
   sast-sonarcloud:
     name: '1. Revisar Código (SAST)'
     runs-on: ubuntu-latest
-
     steps:
       - name: 'Clonando el repositorio'
         uses: actions/checkout@v4
@@ -40,9 +38,7 @@ jobs:
 
       - name: 'Ejecutar Analisis y Quality Gate de SonarCloud'
         uses: SonarSource/sonarcloud-github-action@master
-        
         continue-on-error: true
-        
         env:
           SONAR_TOKEN: ${{ secrets.LAB_DEVSECOPS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,22 +53,20 @@ jobs:
     name: '2. Revisar Dependencias (SCA)'
     needs: sast-sonarcloud
     runs-on: ubuntu-latest
-
     steps:
       - name: 'Clonando el repositorio'
         uses: actions/checkout@v4
 
+
       - name: 'Ejecutar Dependency-Check (SCA)'
-        uses: jeremylong/owasp-dependency-check-action@v2
+        uses: owasp/dependency-check-action@v6
         id: scan
         with:
           project: 'devsecops-laboratorio'
           path: '.'
           format: 'SARIF'
           output: 'reports'
-          
           fail-on-cvss: 4
-          
         continue-on-error: true
 
       - name: 'Subir reporte SARIF a la pestaña Security'
@@ -84,7 +78,6 @@ jobs:
     name: '3. Build Docker y Scan con Trivy'
     needs: sca-dependency-check
     runs-on: ubuntu-latest
-
     steps:
       - name: 'Clonando el repositorio'
         uses: actions/checkout@v4
@@ -106,8 +99,6 @@ jobs:
         with:
           image-ref: 'ImagenEscaneada:latest'
           format: 'table'
-
           severity: 'MEDIUM,HIGH,CRITICAL'
           exit-code: '1'
-
         continue-on-error: true
