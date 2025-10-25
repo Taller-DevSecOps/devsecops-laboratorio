@@ -37,17 +37,13 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: 'Ejecutar Analisis y Quality Gate de SonarCloud'
-        # ¡Corregido a v6 como pide el log!
         uses: SonarSource/sonarqube-scan-action@v6
         continue-on-error: true
         env:
-          # ¡Correcto! Usa el secreto que creaste
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=parmijot
-            -Dsonar.projectKey=parmijot_devsecops-laboratorio
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
 
@@ -59,9 +55,8 @@ jobs:
       - name: 'Clonando el repositorio'
         uses: actions/checkout@v4
 
-      # ¡Corregido a la acción oficial de OWASP!
       - name: 'Ejecutar Dependency-Check (SCA)'
-        uses: owasp/dependency-check-action@v6
+        uses: dependency-check/Dependency-Check_Action@main
         id: scan
         with:
           project: 'devsecops-laboratorio'
@@ -94,13 +89,11 @@ jobs:
         with:
           context: .
           load: true
-          # ¡Esto está perfecto en minúsculas!
           tags: imagenescaneada:latest
 
       - name: 'Escanear imagen con Trivy'
         uses: aquasecurity/trivy-action@master
         with:
-          # ¡Esto está perfecto en minúsculas!
           image-ref: 'imagenescaneada:latest'
           format: 'table'
           severity: 'MEDIUM,HIGH,CRITICAL'
