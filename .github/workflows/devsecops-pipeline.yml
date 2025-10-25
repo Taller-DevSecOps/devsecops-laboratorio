@@ -40,7 +40,7 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         continue-on-error: true
         env:
-          SONAR_TOKEN: ${{ secrets.LAB_DEVSECOPS }}
+          SONAR_TOKEN: ${{ secrets.LAB-DEVSECOPS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
@@ -91,14 +91,15 @@ jobs:
         with:
           context: .
           load: true
-          tags: ImagenEscaneada:latest
+          tags: imagenescaneada:latest
 
       - name: 'Escanear imagen con Trivy'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ImagenEscaneada:latest'
+          image-ref: 'imagenescaneada:latest'
           format: 'table'
           severity: 'MEDIUM,HIGH,CRITICAL'
           exit-code: '1'
         continue-on-error: true
+
 
