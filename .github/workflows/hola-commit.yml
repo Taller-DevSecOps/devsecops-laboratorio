@@ -8,12 +8,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Primer step desde el pipeline
-        run: |
+        run: |    # PAaa agregar multiples lineas
           echo "Pipeline ejecutado por: $GITHUB_ACTOR"
           echo "Rama: $GITHUB_REF"
           echo "Fecha: $(date -u) (UTC)"
 
+  anlisis-SAST:
+    runs-on : ubuntu-latest
+    steps:
+      - name: analisis de Codigo SAST
+        run:
+          echo "analisis de Codigo SAST"
 
+  anlisis-SCA:
+    runs-on : ubuntu-latest
+    steps:
+      - name: analisis de Codigo SCA
+        run:
+          echo "analisis de Codigo SCA"
+          
+  Build-Docker:
+    runs-on : ubuntu-latest
+    steps:
+      - name: Build Docker
+        run:
+          echo "Build Docker"
+#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+
+  Image-Security:
+    runs-on : ubuntu-latest
+    steps:
+      - name: Image Security
+        run:
+          echo "Image Security"
+
+#1. Clonación del repositorio.
+#2. Ejecutar SAST -> Usar SonarCloud o herramienta similar.
+#3. Ejecutar SCA ->Usar Dependency Check o similar.
+#4. Construcción de la Imagen Docker.
+#5. Image Security -> Usar Trivy o similar.
+  
+  
+
+      
 #name: Docker Image CI
 
 #on:
