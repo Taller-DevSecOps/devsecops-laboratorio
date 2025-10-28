@@ -17,8 +17,21 @@ jobs:
     runs-on : ubuntu-latest
     steps:
       - name: analisis de Codigo SAST
-        run:
+        id: AnalisisSAST
+        run: | 
           echo "analisis de Codigo SAST"
+          echo "status=ok" >> "$GITHUB_OUTPUT"
+          #echo "status=fail" >> "$GITHUB_OUTPUT"
+           
+      - name: Analisis SAST OK
+        if: steps.AnalisisSAST.outputs.status == 'ok'
+        run:
+          echo "Analisis SAST OK - TEST"
+          
+      - name: Analisis SAST NOK
+        if: steps.AnalisisSAST.outputs.status != 'ok'
+        run:
+          echo "Analisis SAST NOK - TEST"
 
   anlisis-SCA:
     runs-on : ubuntu-latest
@@ -49,25 +62,3 @@ jobs:
 #4. Construcción de la Imagen Docker.
 #5. Image Security -> Usar Trivy o similar.
   
-  
-
-      
-#name: Docker Image CI
-
-#on:
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
-
-#
-#jobs:
-
-#  build:
-
-#    runs-on: ubuntu-latest
-
-#    steps:
-#    - uses: actions/checkout@v4
-#    - name: Build the Docker image
-#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
