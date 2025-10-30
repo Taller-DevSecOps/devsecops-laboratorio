@@ -1,4 +1,4 @@
-name: Laboratorio Final Curso devSecOps
+name: Hola Commit
 
 on:
   push:          # se ejecuta en cada commit a cualquier rama
