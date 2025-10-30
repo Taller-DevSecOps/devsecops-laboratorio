@@ -39,7 +39,7 @@ jobs:
 
   anlisis-SCA:
     runs-on : ubuntu-latest
-    needs: [AnalisisSAST]  # este job corre después de AnalisisSAST
+    #needs: [AnalisisSAST]  # este job corre después de AnalisisSAST
     steps:
       - name: analisis de Codigo SCA
         run:
