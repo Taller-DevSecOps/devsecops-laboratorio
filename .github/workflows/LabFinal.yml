@@ -1,0 +1,14 @@
+name: Hola Commit
+
+on:
+  push:          # se ejecuta en cada commit a cualquier rama
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Primer step desde el pipeline
+        run: |    # PAaa agregar multiples lineas
+          echo "Pipeline ejecutado por: $GITHUB_ACTOR"
+          echo "Rama: $GITHUB_REF"
+          echo "Fecha: $(date -u) (UTC)"
