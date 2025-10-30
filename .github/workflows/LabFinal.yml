@@ -4,7 +4,7 @@ on:
   push: 
     branches: ["**"]          # se ejecuta en cada commit a cualquier rama
 
-  permissions:
+permissions:
   contents: read
   security-events: write
   pull-requests: read
