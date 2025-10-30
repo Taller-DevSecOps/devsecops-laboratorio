@@ -15,10 +15,17 @@ jobs:
     steps:
       - name: analisis de Codigo SAST
         id: AnalisisSAST
-        run: | 
-          echo "analisis de Codigo SAST"
-          echo "status=ok" >> "$GITHUB_OUTPUT"
-          #echo "status=fail" >> "$GITHUB_OUTPUT"
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.javascript.node.maxspace=4096
+            -Dsonar.qualitygate.wait=true
+        #run: echo "status=ok" >> "$GITHUB_OUTPUT"
            
       - name: Analisis SAST OK
         if: steps.AnalisisSAST.outputs.status == 'ok'
@@ -32,6 +39,7 @@ jobs:
 
   anlisis-SCA:
     runs-on : ubuntu-latest
+    needs: [AnalisisSAST]  # este job corre después de AnalisisSAST
     steps:
       - name: analisis de Codigo SCA
         run:
