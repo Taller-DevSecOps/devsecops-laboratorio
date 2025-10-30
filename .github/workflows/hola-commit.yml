@@ -1,64 +1,16 @@
 name: Hola Commit
 
 on:
-  push:          # se ejecuta en cada commit a cualquier rama
+  push:          
+    branches: ["**"]       # se ejecuta en cada commit a cualquier rama
 
 jobs:
   hello:
     runs-on: ubuntu-latest
     steps:
       - name: Primer step desde el pipeline
-        run: |    # PAaa agregar multiples lineas
+        run: |    # Para agregar multiples lineas
           echo "Pipeline ejecutado por: $GITHUB_ACTOR"
           echo "Rama: $GITHUB_REF"
           echo "Fecha: $(date -u) (UTC)"
 
-  anlisis-SAST:
-    runs-on : ubuntu-latest
-    steps:
-      - name: analisis de Codigo SAST
-        id: AnalisisSAST
-        run: | 
-          echo "analisis de Codigo SAST"
-          echo "status=ok" >> "$GITHUB_OUTPUT"
-          #echo "status=fail" >> "$GITHUB_OUTPUT"
-           
-      - name: Analisis SAST OK
-        if: steps.AnalisisSAST.outputs.status == 'ok'
-        run:
-          echo "Analisis SAST OK - TEST"
-          
-      - name: Analisis SAST NOK
-        if: steps.AnalisisSAST.outputs.status != 'ok'
-        run:
-          echo "Analisis SAST NOK - TEST"
-
-  anlisis-SCA:
-    runs-on : ubuntu-latest
-    steps:
-      - name: analisis de Codigo SCA
-        run:
-          echo "analisis de Codigo SCA"
-          
-  Build-Docker:
-    runs-on : ubuntu-latest
-    steps:
-      - name: Build Docker
-        run:
-          echo "Build Docker"
-#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-
-
-  Image-Security:
-    runs-on : ubuntu-latest
-    steps:
-      - name: Image Security
-        run:
-          echo "Image Security"
-
-#1. Clonación del repositorio.
-#2. Ejecutar SAST -> Usar SonarCloud o herramienta similar.
-#3. Ejecutar SCA ->Usar Dependency Check o similar.
-#4. Construcción de la Imagen Docker.
-#5. Image Security -> Usar Trivy o similar.
-  

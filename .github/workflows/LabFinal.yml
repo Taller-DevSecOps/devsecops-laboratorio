@@ -4,6 +4,11 @@ on:
   push: 
     branches: ["**"]          # se ejecuta en cada commit a cualquier rama
 
+  permissions:
+  contents: read
+  security-events: write
+  pull-requests: read
+
 jobs:
   anlisis-SAST:
     runs-on : ubuntu-latest
