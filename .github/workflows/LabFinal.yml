@@ -46,7 +46,8 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Github lo configura de forma automatica, no es necesario incluirlo 
-          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+          #SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }} 
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN_DevSecOps }} 
 
       # 4) Ejecutar análisis SonarCloud (v6)
       - name: SonarCloud Scan
