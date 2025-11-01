@@ -21,25 +21,40 @@ jobs:
       - name: Variables de Entorno y contexto
         run: |
           echo "Verificando Variables..."
-          echo "Repositorio        : $GITHUB_REPOSITORY"
-          echo "Actor              : $GITHUB_ACTOR"
-          echo "Evento             : $GITHUB_EVENT_NAME"
-          echo "Branch             : $GITHUB_REF_NAME"
-          echo "Commit             : $GITHUB_SHA"
-          echo "Sonar host URL     : https://sonarcloud.io"
-          # Indicar si el secreto existe
-          if [ -n "${SONAR_TOKEN_DevSecOps}" ]; then
-            echo "SONAR_TOKEN_DevSecOps        : definido"
-          else
-            echo "SONAR_TOKEN_DevSecOps        : vacío"
-            exit 1
-          fi
-          
+          echo "Repositorio              : $GITHUB_REPOSITORY"
+          echo "Actor                    : $GITHUB_ACTOR"
+          echo "Evento                   : $GITHUB_EVENT_NAME"
+          echo "Branch                   : $GITHUB_REF_NAME"
+          echo "Commit                   : $GITHUB_SHA"
+          echo "Sonar host URL           : https://sonarcloud.io"
+          echo "SONAR_TOKEN              : ${{SONAR_TOKEN}}
+          echo "SONAR_TOKEN_DevSecOps    : ${{SONAR_TOKEN_DevSecOps}}
+
       #- name: Debug - Listar variables
       #  if: ${{ github.event_name != 'pull_request' }} 
       #  run: |
       #    echo "Variables disponibles (recortadas):"
       #    printenv | sort | sed -e 's/\(.*TOKEN=\).*/\1*** (masked)/g' | head -n 60
+
+      - name: Debug - Confirmar secreto existe en GitHub
+        run: |
+          if [ -n "${{ secrets.SONAR_TOKEN_DevSecOps }}" ]; then
+            echo "GitHub ve el secreto SONAR_TOKEN_DevSecOps (valor oculto)"
+          else
+            echo "GitHub NO encuentra el secreto SONAR_TOKEN_DevSecOps"
+            #exit 1
+          fi
+
+      - name: Debug - Confirmar variable de entorno SONAR_TOKEN
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_DevSecOps }}
+        run: |
+          if [ -n "${SONAR_TOKEN}" ]; then
+            echo "SONAR_TOKEN está definido en el entorno (valor oculto)"
+          else
+            echo "SONAR_TOKEN no está en el entorno"
+            exit 1
+          fi
 
       - name: analisis de Codigo SAST
         id: AnalisisSAST
