@@ -1,0 +1,12 @@
+# Configuración sonar
+sonar.host.url=https://sonarcloud.io
+sonar.organization=jonathanvaldes
+sonar.projectKey=jonathanvaldes_devsecops-laboratorio
+
+# Configuración Codigo fuente
+sonar.sources=.
+sonar.exclusions=**/node_modules/**,**/*.test.*,**/*.spec.*,
+sonar.sourceEncoding=UTF-8
+
+# Configuración gate
+sonar.qualitygate.wait=true
