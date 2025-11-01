@@ -19,7 +19,7 @@ jobs:
 
       - name: analisis de Codigo SAST
         id: AnalisisSAST
-        uses: SonarSource/sonarqube-scan-action@v4.1.0
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
@@ -40,6 +40,7 @@ jobs:
         if: steps.AnalisisSAST.outputs.status != 'ok'
         run:
           echo "Analisis SAST NOK - TEST"
+
 
   anlisis-SCA:
     runs-on : ubuntu-latest
