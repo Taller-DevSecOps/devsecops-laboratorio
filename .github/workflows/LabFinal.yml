@@ -27,8 +27,6 @@ jobs:
           echo "Branch                   : $GITHUB_REF_NAME"
           echo "Commit                   : $GITHUB_SHA"
           echo "Sonar host URL           : https://sonarcloud.io"
-          echo "SONAR_TOKEN              : ${{SONAR_TOKEN}}
-          echo "SONAR_TOKEN_DevSecOps    : ${{SONAR_TOKEN_DevSecOps}}
 
       #- name: Debug - Listar variables
       #  if: ${{ github.event_name != 'pull_request' }} 
