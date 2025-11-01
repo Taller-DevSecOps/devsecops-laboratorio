@@ -26,7 +26,6 @@ jobs:
           echo "Evento                   : $GITHUB_EVENT_NAME"
           echo "Branch                   : $GITHUB_REF_NAME"
           echo "Commit                   : $GITHUB_SHA"
-          echo "Sonar host URL           : https://sonarcloud.io"
 
       #- name: Debug - Listar variables
       #  if: ${{ github.event_name != 'pull_request' }} 
@@ -40,7 +39,7 @@ jobs:
             echo "GitHub ve el secreto SONAR_TOKEN_DevSecOps (valor oculto)"
           else
             echo "GitHub NO encuentra el secreto SONAR_TOKEN_DevSecOps"
-            #exit 1
+            exit 1
           fi
 
       - name: Debug - Confirmar variable de entorno SONAR_TOKEN
