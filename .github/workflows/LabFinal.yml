@@ -14,8 +14,8 @@ jobs:
     runs-on : ubuntu-latest
     steps:
       - name: Checkout
-          uses: actions/checkout@v4
-          run:
+        uses: actions/checkout@v4
+        run:
             echo "Ejecutando checkout para analizar código"
 
       - name: analisis de Codigo SAST
