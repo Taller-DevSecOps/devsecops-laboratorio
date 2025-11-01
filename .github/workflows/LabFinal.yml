@@ -13,7 +13,7 @@ jobs:
   anlisis-SAST:
     runs-on : ubuntu-latest
     steps:
-        - name: Checkout
+      - name: Checkout
           uses: actions/checkout@v4
           run:
             echo "Ejecutando checkout para analizar código"
