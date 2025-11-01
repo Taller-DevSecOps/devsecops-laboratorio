@@ -15,56 +15,74 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        #run: echo "Ejecutando checkout para analizar código"
+        #with:
+          #fetch-depth: 0  
+      
+      - name: Variables de Entorno y contexto
+        run: |
+          echo "Verificando Variables..."
+          echo "Repositorio        : $GITHUB_REPOSITORY"
+          echo "Actor              : $GITHUB_ACTOR"
+          echo "Evento             : $GITHUB_EVENT_NAME"
+          echo "Branch             : $GITHUB_REF_NAME"
+          echo "Commit             : $GITHUB_SHA"
+          echo "Sonar host URL     : https://sonarcloud.io"
+          # Indicar si el secreto existe
+          if [ -n "${SONAR_TOKEN}" ]; then
+            echo "SONAR_TOKEN        : definido"
+          else
+            echo "SONAR_TOKEN        : vacío"
+            exit 1
+          fi
+          
+      #- name: Debug - Listar variables
+      #  if: ${{ github.event_name != 'pull_request' }} 
+      #  run: |
+      #    echo "Variables disponibles (recortadas):"
+      #    printenv | sort | sed -e 's/\(.*TOKEN=\).*/\1*** (masked)/g' | head -n 60
 
       - name: analisis de Codigo SAST
         id: AnalisisSAST
         uses: SonarSource/sonarqube-scan-action@v6
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Github lo configura de forma automatica, no es necesario incluirlo 
           SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
-        #with:
-          #args: >
-            #-Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            #-Dsonar.organization=${{ secrets.SONAR_ORG }}
-            #-Dsonar.javascript.node.maxspace=4096
-            #-Dsonar.qualitygate.wait=true
-        #run: echo "status=ok" >> "$GITHUB_OUTPUT"
-           
-      - name: Analisis SAST OK
-        if: steps.AnalisisSAST.outputs.status == 'ok'
-        run:
-          echo "Analisis SAST OK - TEST"
+
+      # 4) Ejecutar análisis SonarCloud (v6)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Resultado SAST
+        if: ${{ success() }}
+        run: echo "SAST finalizado. Revisa el Quality Gate en SonarCloud."
+
+
+#  anlisis-SCA:
+#    runs-on : ubuntu-latest
+#    #needs: [AnalisisSAST]  # este job corre después de AnalisisSAST
+#    steps:
+#      - name: analisis de Codigo SCA
+#        run:
+#          echo "analisis de Codigo SCA"
           
-      - name: Analisis SAST NOK
-        if: steps.AnalisisSAST.outputs.status != 'ok'
-        run:
-          echo "Analisis SAST NOK - TEST"
+#  Build-Docker:
+#    runs-on : ubuntu-latest
+#    steps:
+#      - name: Build Docker
+#        run:
+#          echo "Build Docker"
+##      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
 
 
-  anlisis-SCA:
-    runs-on : ubuntu-latest
-    #needs: [AnalisisSAST]  # este job corre después de AnalisisSAST
-    steps:
-      - name: analisis de Codigo SCA
-        run:
-          echo "analisis de Codigo SCA"
-          
-  Build-Docker:
-    runs-on : ubuntu-latest
-    steps:
-      - name: Build Docker
-        run:
-          echo "Build Docker"
-#      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+#  Image-Security:
+#    runs-on : ubuntu-latest
+#    steps:
+#      - name: Image Security
+#        run:
+#          echo "Image Security"
 
-
-  Image-Security:
-    runs-on : ubuntu-latest
-    steps:
-      - name: Image Security
-        run:
-          echo "Image Security"
 
 #1. Clonación del repositorio.
 #2. Ejecutar SAST -> Usar SonarCloud o herramienta similar.
