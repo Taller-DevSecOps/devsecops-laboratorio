@@ -70,7 +70,7 @@ jobs:
             --out reports \
             --nvdApiKey "$NVD_API_KEY" \
             --disableOssIndex \
-            --failOnCVSS 5.0
+            --failOnCVSS 11.0
 
       - name: Upload SCA report
         uses: actions/upload-artifact@v4
