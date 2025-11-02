@@ -43,9 +43,12 @@ jobs:
           SONAR_SCANNER_OPTS: "-Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.projectKey=${{ github.repository }}"
 
       - name: Quality Gate
-        uses: SonarSource/sonarcloud-quality-gate-action@v1.1.0
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
 
   sca:
     name: 3) SCA (OWASP Dependency-Check)
