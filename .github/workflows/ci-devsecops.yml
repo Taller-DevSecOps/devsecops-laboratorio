@@ -34,19 +34,7 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      - name: SonarCloud Scan (push)
-        if: ${{ github.event_name == 'push' }}
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=${{ secrets.SONAR_ORG }}
-            -Dsonar.projectKey=gespinoza-dev_devsecops-laboratorio
-            -Dsonar.qualitygate.wait=true
-
-      - name: SonarCloud Scan (pull request)
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
