@@ -1,8 +1,9 @@
 name: Workflow
 on:
   push:
-    branches:
-      - main
+    branches: ['**']
+  pull_request:
+    branches: ['**']
 jobs:
   SAST:
     runs-on: ubuntu-latest
