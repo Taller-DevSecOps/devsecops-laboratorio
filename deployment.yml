@@ -17,6 +17,10 @@ spec:
     spec:
       containers:
       - name: result-app
-        image:
+        image: 
         ports:
         - containerPort: 3000
+        resources:
+          limits:
+            memory: 100Mi
+      automountServiceAccountToken: false
