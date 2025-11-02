@@ -58,13 +58,17 @@ jobs:
           curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v11.1.0/dependency-check-11.1.0-release.zip -o dc.zip
           sudo apt-get update && sudo apt-get install -y unzip
           unzip dc.zip -d $HOME/dc
-          
+
       - name: Dependency-Check - analyze
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           $HOME/dc/dependency-check/bin/dependency-check.sh \
             --scan . \
             --format "JSON" \
             --out reports \
+            --nvdApiKey $NVD_API_KEY \
+            --cveValidForHours 24 \
             --failOnCVSS 5.0
 
       - name: Upload SCA report
