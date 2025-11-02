@@ -10,5 +10,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: HOLA MUNDO
-        run: echo "Hola Mundo"
+      - name: Exists proyect on SonarCloud Service
+        id: validateProjectSonar
+        run: |
+          curl -f -X POST -u '${{secret.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=claudioandre94-blip' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
+          if [ $? -eq 0 ]; then
+            echo "Proyecto creado exitosamente en SONARCLOUD"
+            curl -f -X POST -u '${{secret.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+          else
+            echo "El proyecto ya existe en SonarCloud o hubo un problema al intentar crearlo"
+          fi
+
+      - name: Configure Node Project
+        uses: actions/setup-node@v4
+
+      - name: Install SonarCloud Node JS
+        run : npm install -g @sonar/scan
+
+      - name: Configure NodeJs Project
+        run : npm install  
+
