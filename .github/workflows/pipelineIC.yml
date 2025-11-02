@@ -16,7 +16,7 @@ jobs:
           curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=claudioandre94-blip' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
           if [ $? -eq 0 ]; then
             echo "Proyecto creado exitosamente en SONARCLOUD"
-            curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+            curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
           else
             echo "El proyecto ya existe en SonarCloud o hubo un problema al intentar crearlo"
           fi
