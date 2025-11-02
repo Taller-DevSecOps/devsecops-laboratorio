@@ -31,6 +31,6 @@ jobs:
         run : npm install  
 
       - name: Run SonarCube on Project
-        run : sonar-scanner -Dsonar.login=${{secrets.SONAR_TOKEN}}
+        run : sonar-scanner -Dsonar.token=${{secrets.SONAR_TOKEN}} -Dsonar.organization=claudioandre94-blip  -Dsonar.projectKey=${{github.event.repository.name}}
 
 
