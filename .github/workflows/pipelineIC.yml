@@ -11,16 +11,19 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Exists proyect on SonarCloud Service
-        id: validateProjectSonar
+        id: validateProjectOnSonar
         run: |
+          set +e
           curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=claudioandre94-blip' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
-          if [ $? -eq 0 ]; then
-            echo "Proyecto creado exitosamente en SONARCLOUD"
-            curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+          if [ $? -ne 0 ]; then
+            echo "Proyecto ya existe en SonarCloud"
+            echo "::set-output name=proyectoExiste::1"
           else
-            echo "El proyecto ya existe en SonarCloud o hubo un problema al intentar crearlo"
+            echo "Proyecto ${{github.event.repository.name}} creado exitosamente en SonarCloud "
+            echo "Se establece rama main por defecto"
+            curl -f -X POST -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
           fi
-
+          set -e
       - name: Configure Node Project
         uses: actions/setup-node@v4
 
@@ -35,7 +38,7 @@ jobs:
 
       - name : Obtaing results from SonarCloud
         run :  |
-          issueValidate=$(curl -s -u ${{secrets.SONAR_TOKEN}}: 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=${{github.event.repository.name}}&types=VULNERABILITY&severities=MAJOR,CRITICAL,BLOCKER' | jq -r '.issues | length')
+          issueValidate=$(curl -s X GET -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=${{github.event.repository.name}}&types=VULNERABILITY&severities=MAJOR,CRITICAL,BLOCKER' | jq -r '.issues | length')
           echo "Cantidad de Issues MAJOR,CRITICAL,BLOCKER : $issueValidate"
           if [ "$issueValidate" -gt 0 ]; then
             echo "Se encontraron issues bloqueantes. Se quiebra el pipeline."
