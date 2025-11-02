@@ -43,3 +43,35 @@ jobs:
           else
             echo "No se encontraron issues bloqueantes. Pipeline Continua."
           fi
+
+  SCA:
+    needs: SAST
+    run-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure Node Project
+        uses: actions/setup-node@v4
+
+      - name: Configure NodeJs Project
+        run : npm install
+
+      - name: Run OWASP Dependecy-Check
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        env:
+          JAVA_HOME: /opt/jdk
+        with:
+          project: '${{github.event.repository.name}}'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: > 
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@master
+        with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
