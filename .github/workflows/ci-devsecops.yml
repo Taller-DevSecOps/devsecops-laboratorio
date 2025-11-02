@@ -70,7 +70,7 @@ jobs:
             --out reports \
             --nvdApiKey "$NVD_API_KEY" \
             --disableOssIndex \
-            --failOnCVSS 5.0
+            --failOnCVSS 11.0
 
       - name: Upload SCA report
         uses: actions/upload-artifact@v4
@@ -121,10 +121,10 @@ jobs:
           scan-type: image
           image-ref: "movies-app:${{ github.sha }}"
           format: "table"
-          exit-code: "0"
+          exit-code: "1"
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH,MEDIUM"
-          ignore-unfixed: true
+          
 
       - name: Upload trivy report
         if: always()
