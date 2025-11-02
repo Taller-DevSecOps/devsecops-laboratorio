@@ -91,7 +91,7 @@ jobs:
 
       - name: Build Docker Images
         run : |
-          docker build --tag tareadevsecopsusachfinalclaudioquiroz:latest .
+          docker build --tag ${{secrets.DOCKER_USER}}/tareadevsecopsusachfinalclaudioquiroz:latest .
 
       - name: Login to DockerHub
         uses: docker/login-action@v3.0.0
