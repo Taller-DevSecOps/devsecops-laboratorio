@@ -1,22 +1,23 @@
-name: CI DeevSecOps - Movies
+name: CI DevSecOps - Movies
 
 on:
   push:
-    branches: ["main","feature/pipeline-movies"]
+    branches: ["main", "feature/pipeline-movies"]
   pull_request:
-    branches: ["main","feature/pipeline-movies"]
+    branches: ["main", "feature/pipeline-movies"]
 
 jobs:
   checkout:
-    name: 1) checkout repo
+    name: 1) Checkout repo
     runs-on: ubuntu-latest
     outputs:
-      sha: ${{ steps.get_sha.outputs.sha}}
+      sha: ${{ steps.get_sha.outputs.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - id: get_sha
-        run: echo "sha=${{ github.sha}}" >> $GITHUB_OUTPUT
+        run: echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+
   sast:
     name: 2) SAST (SonarCloud)
     runs-on: ubuntu-latest
@@ -26,14 +27,26 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: "17"
           distribution: "temurin"
 
-      - name: SonarCloud Scan
+      - name: SonarCloud Scan (push)
+        if: ${{ github.event_name == 'push' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.projectKey=gespinoza-dev_devsecops-laboratorio
+            -Dsonar.qualitygate.wait=true
+
+      - name: SonarCloud Scan (pull request)
+        if: ${{ github.event_name == 'pull_request' }}
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -43,40 +56,40 @@ jobs:
             -Dsonar.projectKey=gespinoza-dev_devsecops-laboratorio
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}  
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.qualitygate.wait=true
 
-    sca:
-      name: 3) SCA (OWASP Dependency-Check)
-      runs-on: ubuntu-latest
-      needs: [checkout, sast]
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+  sca:
+    name: 3) SCA (OWASP Dependency-Check)
+    runs-on: ubuntu-latest
+    needs: [checkout, sast]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Dependency-Check - install
-          run: |
-            curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v11.1.0/dependency-check-11.1.0-release.zip -o dc.zip
-            sudo apt-get update && sudo apt-get install -y unzip
-            unzip dc.zip -d $HOME/dc
+      - name: Dependency-Check - install
+        run: |
+          curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v11.1.0/dependency-check-11.1.0-release.zip -o dc.zip
+          sudo apt-get update && sudo apt-get install -y unzip
+          unzip dc.zip -d $HOME/dc
 
-        - name: Dependency-Check - analyze
-          env:
-            NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-          run: |
-            $HOME/dc/dependency-check/bin/dependency-check.sh \
-              --scan . \
-              --format "JSON" \
-              --out reports \
-              --nvdApiKey "$NVD_API_KEY" \
-              --failOnCVSS 5.0
+      - name: Dependency-Check - analyze
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          $HOME/dc/dependency-check/bin/dependency-check.sh \
+            --scan . \
+            --format "JSON" \
+            --out reports \
+            --nvdApiKey "$NVD_API_KEY" \
+            --failOnCVSS 5.0
 
-        - name: Upload SCA report
-          uses: actions/upload-artifact@v4
-          with:
-            name: dependency-check-report
-            path: reports
+      - name: Upload SCA report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports
 
-          
   build-image:
     name: 4) Build Docker image
     runs-on: ubuntu-latest
@@ -92,14 +105,14 @@ jobs:
           docker build -t movies-app:${{ github.sha }} .
 
       - name: Save image to tar
-        run: |
-          docker save movies-app:${{ github.sha }} -o image.tar
+        run: docker save movies-app:${{ github.sha }} -o image.tar
 
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: image.tar
+
   image-security:
     name: 5) Image Security (Trivy)
     runs-on: ubuntu-latest
@@ -114,7 +127,7 @@ jobs:
       - name: Load image
         run: docker load -i image.tar
 
-      - name: Install Trivy
+      - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: image
@@ -124,12 +137,10 @@ jobs:
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH,MEDIUM"
 
-      - name: Upload trivy report (optional)
+      - name: Upload trivy report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.txt
           if-no-files-found: ignore
-  
-          
