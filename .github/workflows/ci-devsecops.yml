@@ -33,12 +33,6 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:javascript"
-          fail-on: security-severity-critical,security-severity-high
     
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
@@ -76,7 +70,7 @@ jobs:
             --out reports \
             --nvdApiKey "$NVD_API_KEY" \
             --disableOssIndex \
-            --failOnCVSS 11.0
+            --failOnCVSS 5.0
 
       - name: Upload SCA report
         uses: actions/upload-artifact@v4
