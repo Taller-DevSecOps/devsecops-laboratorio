@@ -43,7 +43,7 @@ jobs:
           SONAR_SCANNER_OPTS: "-Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.projectKey=${{ github.repository }}"
 
       - name: Quality Gate
-        uses: SonarSource/sonarcloud-quality-gate-action@v1
+        uses: SonarSource/sonarcloud-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
