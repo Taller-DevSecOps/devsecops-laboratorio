@@ -33,4 +33,13 @@ jobs:
       - name: Run SonarCube on Project
         run : sonar-scanner -Dsonar.token=${{secrets.SONAR_TOKEN}} -Dsonar.organization=claudioandre94-blip  -Dsonar.projectKey=${{github.event.repository.name}}
 
-
+      - name : Obtaing results from SonarCloud
+        run :  |
+          issueValidate=$(curl -s -X GET -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=${{github.event.repository.name}}&facets=severities' | jq '-facets[0].values[1].count')
+          echo "Cantidad de Issues Bloqueantes : $issueValidate"
+          if [ "$issueValidate" -gt 0 ]; then
+            echo "Se encontraron issues bloqueantes. Se quiebra el pipeline."
+            exit 1
+          else
+            echo "No se encontraron issues bloqueantes. Pipeline Continua."
+          fi
