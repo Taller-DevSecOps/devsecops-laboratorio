@@ -75,3 +75,30 @@ jobs:
         with:
           name: Depcheck report
           path: ${{github.workspace}}/reports
+
+  DockerBuild:
+    needs: SCA
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure Node Project
+        uses: actions/setup-node@v4
+
+      - name: Configure NodeJs Project
+        run : npm install build
+
+      - name: Build Docker Images
+        run : |
+          docker build --tag tareadevsecopsUsachfinalClaudioQuiroz:latest .
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3.0.0
+        with:
+          username: ${{secrets.DOCKER_USER}}
+          password: ${{secrets.DOCKER_PASSWORD}}
+        
+      - name: Push to DockerHub
+        run : |
+          docker push ${{secrets.DOCKER_USER}}/tareadevsecopsUsachfinalClaudioQuiroz:latest
