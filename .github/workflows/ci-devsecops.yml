@@ -69,6 +69,7 @@ jobs:
             --format "JSON" \
             --out reports \
             --nvdApiKey "$NVD_API_KEY" \
+            --disableOssIndex \
             --failOnCVSS 5.0
 
       - name: Upload SCA report
