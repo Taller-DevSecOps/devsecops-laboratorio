@@ -35,7 +35,7 @@ jobs:
 
       - name : Obtaing results from SonarCloud
         run :  |
-          issueValidate=$(curl -s -X GET -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=${{github.event.repository.name}}&types=VULNERABILITY&severities=CRITICAL,HIGH,MEDIUM&pageSize=1" | jq '.total')
+          issueValidate=$(curl -s -X GET -u '${{secrets.SONAR_TOKEN}}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=${{github.event.repository.name}}&types=VULNERABILITY&severities=CRITICAL,HIGH,MEDIUM&pageSize=1' | jq '.total')
           echo "Cantidad de Issues Bloqueantes : $issueValidate"
           if [ "$issueValidate" -gt 0 ]; then
             echo "Se encontraron issues bloqueantes. Se quiebra el pipeline."
