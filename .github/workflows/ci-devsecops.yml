@@ -1,13 +1,11 @@
-
 name: CI DevSecOps
 
 on:
   push:
-    branches: [ "ci-devsecops", "main" ]
+    branches: ["ci-devsecops", "main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
-# Permisos suficientes para escanear y reportar
 permissions:
   contents: read
   security-events: write
@@ -17,45 +15,31 @@ permissions:
 jobs:
   devsecops:
     runs-on: ubuntu-latest
-
     steps:
-      # --- Checkout del código ---
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # --- Info rápida para debug ---
-      - name: Debug info
-        run: |
-          echo "GITHUB_REF=$GITHUB_REF"
-          echo "GITHUB_SHA=$GITHUB_SHA"
-          git status
-          ls -la
-
-      # --- Guardas: falla temprano si faltan secrets requeridos ---
-      - name: Guard: required secrets present
+      - name: Guard required secrets
         env:
           HAS_ORG: ${{ secrets.SONAR_ORG }}
           HAS_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           HAS_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           err=0
-          [ -z "$HAS_ORG" ]   && echo "❌ Missing secret SONAR_ORG" && err=1
-          [ -z "$HAS_KEY" ]   && echo "❌ Missing secret SONAR_PROJECT_KEY" && err=1
-          [ -z "$HAS_TOKEN" ] && echo "❌ Missing secret SONAR_TOKEN" && err=1
+          [ -z "$HAS_ORG" ] && echo "Missing SONAR_ORG" && err=1
+          [ -z "$HAS_KEY" ] && echo "Missing SONAR_PROJECT_KEY" && err=1
+          [ -z "$HAS_TOKEN" ] && echo "Missing SONAR_TOKEN" && err=1
           exit $err
 
-      # =========================
-      #        SAST: SONAR
-      # =========================
-      - name: Set up JDK (for SonarCloud scanner)
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: "17"
 
-      - name: SonarCloud Scan (Quality Gate blocking)
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -67,36 +51,14 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.qualitygate.wait=true
 
-      # =========================
-      #   SCA/Secrets/Misconfig
-      # =========================
-      - name: Trivy FS Scan (fail on MEDIUM+)
+      - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: fs
           ignore-unfixed: true
-          format: 'table'
-          severity: 'MEDIUM,HIGH,CRITICAL'  # MEDIUM+ bloquea
-          exit-code: '1'                    # si encuentra severidades, falla el job
-          scanners: 'vuln,secret,misconfig,license'
-          vuln-type: 'os,library'
-          skip-dirs: '.git,.github'
-
-      # =========================
-      #  (Opcional) Imagen Docker
-      # =========================
-      # Descomenta si tienes Dockerfile y quieres escanear la imagen también:
-      #
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #
-      # - name: Build Docker image
-      #   run: docker build -t app:ci .
-      #
-      # - name: Trivy Image Scan (fail on MEDIUM+)
-      #   uses: aquasecurity/trivy-action@0.28.0
-      #   with:
-      #     image-ref: app:ci
-      #     format: 'table'
-      #     severity: 'MEDIUM,HIGH,CRITICAL'
-      #     exit-code: '1'
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+          scanners: vuln,secret,misconfig,license
+          vuln-type: os,library
+          skip-dirs: .git,.github
