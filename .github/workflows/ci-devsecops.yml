@@ -16,30 +16,19 @@ jobs:
   devsecops:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Guard required secrets
-        env:
-          HAS_ORG: ${{ secrets.SONAR_ORG }}
-          HAS_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-          HAS_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          err=0
-          [ -z "$HAS_ORG" ] && echo "Missing SONAR_ORG" && err=1
-          [ -z "$HAS_KEY" ] && echo "Missing SONAR_PROJECT_KEY" && err=1
-          [ -z "$HAS_TOKEN" ] && echo "Missing SONAR_TOKEN" && err=1
-          exit $err
-
-      - name: Set up JDK
+      # SAST: SonarCloud Code Analysis
+      - name: Set up JDK for SonarCloud
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: SonarCloud Scan
+      - name: SonarCloud Scan (SAST)
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -54,14 +43,45 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.verbose=true
 
-      - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@0.28.0
+      # SCA: Dependency Check for supply chain vulnerabilities
+      - name: Run Dependency Check (SCA)
+        uses: dependency-check/Dependency-Check_Action@main
         with:
-          scan-type: fs
-          ignore-unfixed: true
-          format: table
-          severity: MEDIUM,HIGH,CRITICAL
-          exit-code: "1"
-          scanners: vuln,secret,misconfig,license
-          vuln-type: os,library
-          skip-dirs: .git,.github
+          project: 'devsecops-laboratorio'
+          path: '.'
+          format: 'JSON'
+          args: >
+            --fail-on-cvss 4.0
+            --scan /github/workspace
+
+      - name: Upload Dependency Check Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports/
+
+      # Docker Build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: devsecops-laboratorio:latest
+          outputs: type=docker,dest=/tmp/image.tar
+
+      - name: Load Docker Image
+        run: docker load --input /tmp/image.tar
+
+      # Image Security: Trivy Scan
+      - name: Trivy Image Scan (Image Security)
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: '/tmp/image.tar'
+          format: 'table'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          exit-code: '1'
+
