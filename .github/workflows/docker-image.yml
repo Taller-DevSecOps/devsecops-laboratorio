@@ -1,0 +1,15 @@
+#Pipeline IC - DevSecOps Tarea Final (Desarrollado por Sandra)
+name: WorkFlow smedels - DevSecOps
+
+on:
+  push:
+    branches:
+      - feat-devsecops
+
+jobs:
+   Pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Clonar de repositorio
+      - name: Checkout repository
+
