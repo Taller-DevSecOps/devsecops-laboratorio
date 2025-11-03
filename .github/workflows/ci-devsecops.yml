@@ -76,7 +76,7 @@ jobs:
       - name: Load Docker Image
         run: docker load --input /tmp/image.tar
 
-      # Image Security: Trivy Scan
+      # Image Security: Trivy Scan.
       - name: Trivy Image Scan (Image Security)
         uses: aquasecurity/trivy-action@master
         with:
