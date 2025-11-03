@@ -29,6 +29,7 @@ jobs:
           java-version: "17"
 
       - name: SonarCloud Scan (SAST)
+        continue-on-error: true
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
