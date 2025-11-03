@@ -1,0 +1,20 @@
+#Pipeline  - DevSecOps (creado por Sandra Medel)
+name: WorkFlow para IC - DevSecOps
+
+on:
+  push:
+    branches:
+      - feat-devsecops
+
+jobs:
+  Pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Clonación de repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Repositorio clonado exitosamente
+        run: |
+          echo "::notice title=Clonación lista::Repositorio ${{ github.repository }} clonado correctamente"
+          echo "Iniciando el pipeline DevSecOps para el proyecto ${{ github.event.repository.name }}"
