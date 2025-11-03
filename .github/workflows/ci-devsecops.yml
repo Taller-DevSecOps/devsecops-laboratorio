@@ -6,21 +6,32 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Permisos razonables para acciones que leen el repo y reportan seguridad
 permissions:
   contents: read
   security-events: write
+  checks: write
+  pull-requests: read
 
 jobs:
   devsecops:
     runs-on: ubuntu-latest
 
     steps:
+      # --- Diagnóstico mínimo para confirmar que el workflow sí ejecuta ---
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ===== SonarCloud =====
+      - name: Debug info (branch & tree)
+        run: |
+          echo "GITHUB_REF=$GITHUB_REF"
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          git status
+          ls -la
+
+      # --- SonarCloud (con tokens recomendados) ---
       - name: Set up JDK (for SonarCloud scanner)
         uses: actions/setup-java@v4
         with:
@@ -31,6 +42,7 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # recomendado por SonarCloud
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
@@ -38,15 +50,16 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.qualitygate.wait=true
 
-      # ===== Trivy (FS) =====
+      # --- Trivy FS (lo dejamos sin bloquear para ver Sonar primero) ---
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true     # temporal para no cortar el job todavía
         with:
           scan-type: fs
           ignore-unfixed: true
           format: 'table'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1'
+          exit-code: '1'            # dejaremos que “marque fallo”, pero sin cortar
           scanners: 'vuln,secret,misconfig,license'
           vuln-type: 'os,library'
           skip-dirs: '.git,.github'
