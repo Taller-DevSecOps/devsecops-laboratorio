@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-# Permisos razonables para acciones que leen el repo y reportan seguridad
 permissions:
   contents: read
   security-events: write
@@ -18,20 +17,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --- Diagnóstico mínimo para confirmar que el workflow sí ejecuta ---
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Debug info (branch & tree)
+      - name: Debug info
         run: |
           echo "GITHUB_REF=$GITHUB_REF"
           echo "GITHUB_SHA=$GITHUB_SHA"
           git status
           ls -la
 
-      # --- SonarCloud (con tokens recomendados) ---
+      # ----- Guardas: falla temprano si faltan secrets -----
+      - name: Guard: required secrets present
+        env:
+          HAS_ORG: ${{ secrets.SONAR_ORG }}
+          HAS_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          HAS_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          err=0
+          [ -z "$HAS_ORG" ]   && echo "❌ Missing secret SONAR_ORG" && err=1
+          [ -z "$HAS_KEY" ]   && echo "❌ Missing secret SONAR_PROJECT_KEY" && err=1
+          [ -z "$HAS_TOKEN" ] && echo "❌ Missing secret SONAR_TOKEN" && err=1
+          exit $err
+
+      # ----- SonarCloud (SAST) -----
       - name: Set up JDK (for SonarCloud scanner)
         uses: actions/setup-java@v4
         with:
@@ -42,7 +53,7 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # recomendado por SonarCloud
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
@@ -50,16 +61,15 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.qualitygate.wait=true
 
-      # --- Trivy FS (lo dejamos sin bloquear para ver Sonar primero) ---
+      # ----- Trivy (SCA/Misconfig/Secrets) en modo estricto -----
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@0.28.0
-        continue-on-error: true     # temporal para no cortar el job todavía
         with:
           scan-type: fs
           ignore-unfixed: true
           format: 'table'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '1'            # dejaremos que “marque fallo”, pero sin cortar
+          severity: 'MEDIUM,HIGH,CRITICAL'   # MEDIUM+ bloquea
+          exit-code: '1'                     # si encuentra severidades, falla el job
           scanners: 'vuln,secret,misconfig,license'
           vuln-type: 'os,library'
           skip-dirs: '.git,.github'
