@@ -1,4 +1,4 @@
-name: CI DevSecOps Movies (Paso 1)
+name: CI DevSecOps Movies (Paso 2 - Node/TS)
 
 on:
   push:
@@ -6,12 +6,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  hello:
+  prepare-node:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Echo
-        run: echo "Pipeline iniciado - Paso 1"
+      # Node 20 y cache de dependencias según el lock file
+      - name: Configurar Node.js 20 + cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'                # usa npm; cambia a 'yarn' o 'pnpm' si corresponde
+          cache-dependency-path: |
+            package-lock.json
+            **/package-lock.json
 
+      - name: Mostrar versiones
+        run: |
+          echo "Node:" && node -v
+          echo "npm:" && npm -v
+
+      # Instala dependencias de forma reproducible
+      - name: Instalar dependencias (npm ci)
+        run: npm ci
+
+      # Compilar si existe script build (Next/TS)
+      - name: Compilar (si existe script build)
+        run: |
+          if npm run | grep -q " build"; then
+            npm run build
+          else
+            echo "No hay script 'build' en package.json; solo verificando instalación."
+          fi
+
+      # Verificar TypeScript si hay tsconfig.json (sin generar salida)
+      - name: Chequeo TypeScript (opcional)
+        if: ${{ hashFiles('tsconfig.json') != '' }}
+        run: npx tsc --noEmit
