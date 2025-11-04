@@ -4,7 +4,7 @@ name: WorkFlow para IC - DevSecOps
 on:
   push:
     branches:
-      - feat-devsecops
+      - rama-devsecops
 
 jobs:
   Pipeline:
