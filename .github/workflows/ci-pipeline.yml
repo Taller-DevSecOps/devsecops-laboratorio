@@ -1,0 +1,8 @@
+name: CI DevSecOps Movies
+
+on:
+  push:
+    branches: [ "feature-pipeline-seguro" ]
+  pull_request:
+    branches: [ "main" ]
+
