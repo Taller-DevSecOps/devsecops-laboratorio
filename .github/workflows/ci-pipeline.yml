@@ -1,4 +1,4 @@
-name: CI DevSecOps Movies (Paso 3 - SAST)
+name: CI DevSecOps Movies (Paso 4 - SCA)
 
 on:
   push:
@@ -54,9 +54,9 @@ jobs:
         id: semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/owasp-top-ten"   # Reglas públicas OWASP
-          generateSarif: true         # genera semgrep.sarif
-          error: true                 # ← Falla si hay hallazgos
+          config: "p/owasp-top-ten"
+          generateSarif: true
+          error: true
 
       - name: Guardar artefactos SAST (SARIF + logs)
         if: always()
@@ -66,4 +66,28 @@ jobs:
           path: |
             semgrep.sarif
             ${GITHUB_WORKSPACE}/**/.semgrep/semgrep.log
+          if-no-files-found: ignore
+
+  sca:
+    runs-on: ubuntu-latest
+    needs: sast
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Ejecutar análisis SCA con Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs                # analiza el sistema de archivos
+          scanners: vuln,config,secret # busca vulnerabilidades, configuraciones inseguras y secretos
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 1                 # falla si detecta Medium o superior
+          ignore-unfixed: true         # ignora CVE sin fix disponible
+
+      - name: Guardar reportes SCA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-trivy-${{ github.run_id }}
+          path: trivy-report.json
           if-no-files-found: ignore
