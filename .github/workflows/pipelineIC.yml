@@ -66,7 +66,33 @@ jobs:
       # 7. SCA - npm audit 
       - name: SCA - npm audit (falla si hay vulnerabilidades medias o mayores)
         run: npm audit --audit-level=moderate
+     
       # 8. Construcción de imagen Docker
       - name: Construir imagen Docker
         run: docker build -t movies-app:latest .
+      
+      # 9. Escaneo de imagen con Trivy
+      - name: Escaneo de imagen con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: movies-app:latest
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 1
+          format: table
+          ignore-unfixed: false
+
+      # 10. Generar reporte HTML Trivy usando plantilla local 
+      - name: Generar reporte HTML de Trivy
+        if: always()
+        run: |
+          trivy image --format template --template "@.github/trivy/html.tpl" --output trivy-final-report.html movies-app:latest
+          echo "Reporte Trivy generado con éxito."
+
+      # 11. Publicar reporte Trivy HTML (siempre se ejecuta)
+      - name: Publicar reporte Trivy HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-html-report
+          path: trivy-final-report.html
 
