@@ -11,7 +11,7 @@ jobs:
     steps:
       # 1. Clonación de repositorio
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Repositorio clonado exitosamente
         run: |
@@ -43,7 +43,7 @@ jobs:
         
       # 4. Preparar Node.js v18 para SCA
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -58,7 +58,7 @@ jobs:
           echo "=== Archivo generado SCA HTML ==="
           ls -la Reporte_FINAL_SCA.html
       - name: Publicar reporte SCA
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: sca-audit-report
           path: Reporte_FINAL_SCA.html
