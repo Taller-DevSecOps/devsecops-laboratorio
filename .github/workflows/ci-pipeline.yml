@@ -1,47 +1,69 @@
-name: CI DevSecOps Movies (Paso 2 - Node/TS)
+name: CI DevSecOps Movies (Paso 3 - SAST)
 
 on:
   push:
     branches: [ "feature-pipeline-seguro" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   prepare-node:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      # Node 20 y cache de dependencias según el lock file
       - name: Configurar Node.js 20 + cache
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'                # usa npm; cambia a 'yarn' o 'pnpm' si corresponde
+          cache: 'npm'
           cache-dependency-path: |
             package-lock.json
             **/package-lock.json
 
       - name: Mostrar versiones
         run: |
-          echo "Node:" && node -v
-          echo "npm:" && npm -v
+          node -v
+          npm -v
 
-      # Instala dependencias de forma reproducible
-      - name: Instalar dependencias (npm ci)
+      - name: Instalar dependencias
         run: npm ci
 
-      # Compilar si existe script build (Next/TS)
       - name: Compilar (si existe script build)
         run: |
           if npm run | grep -q " build"; then
             npm run build
           else
-            echo "No hay script 'build' en package.json; solo verificando instalación."
+            echo "No hay script 'build' en package.json; solo verificación."
           fi
 
-      # Verificar TypeScript si hay tsconfig.json (sin generar salida)
       - name: Chequeo TypeScript (opcional)
         if: ${{ hashFiles('tsconfig.json') != '' }}
         run: npx tsc --noEmit
+
+  sast:
+    runs-on: ubuntu-latest
+    needs: prepare-node
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Ejecutar SAST con Semgrep (OWASP Top 10)
+        id: semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/owasp-top-ten"   # Reglas públicas OWASP
+          generateSarif: true         # genera semgrep.sarif
+          error: true                 # ← Falla si hay hallazgos
+
+      - name: Guardar artefactos SAST (SARIF + logs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sast-${{ github.run_id }}
+          path: |
+            semgrep.sarif
+            ${GITHUB_WORKSPACE}/**/.semgrep/semgrep.log
+          if-no-files-found: ignore
