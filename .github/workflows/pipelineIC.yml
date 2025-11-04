@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "::notice title=Clonación lista::Repositorio ${{ github.repository }} clonado correctamente"
           echo "Iniciando el pipeline DevSecOps para el proyecto ${{ github.event.repository.name }}"
-      # 2. crear proyecto en SonarCloud
+      # 2. Crear proyecto en SonarCloud
       - name: Proyecto en Sonarcloud
         id: validateProjectSonar
         run: |
@@ -30,3 +30,14 @@ jobs:
             echo "Error cuando creaba el proyecto en SonarCloud :("
             exit 1
           fi
+      # 3. Analizando con SonarCloud (SAST)
+      - name: Analisis SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: |
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=400
+        continue-on-error: true
