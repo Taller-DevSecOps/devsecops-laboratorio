@@ -18,3 +18,15 @@ jobs:
         run: |
           echo "::notice title=Clonación lista::Repositorio ${{ github.repository }} clonado correctamente"
           echo "Iniciando el pipeline DevSecOps para el proyecto ${{ github.event.repository.name }}"
+      # 2. crear proyecto en SonarCloud
+      - name: Proyecto en Sonarcloud
+        id: validateProjectSonar
+        run: |
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=smedels' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
+          if [ $? -eq 0 ]; then
+            echo "Proyecto creado en SonarCloud"
+            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+          else
+            echo "Error cuando creaba el proyecto en SonarCloud :("
+            exit 1
+          fi
