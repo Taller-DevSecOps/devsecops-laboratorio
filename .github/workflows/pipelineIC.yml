@@ -5,14 +5,13 @@ on:
   push:
     branches:
       - rama-devsecops
-
 jobs:
   Pipeline:
     runs-on: ubuntu-latest
     steps:
       # 1. Clonación de repositorio
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Repositorio clonado exitosamente
         run: |
@@ -41,3 +40,29 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=400
         continue-on-error: true
+        
+      # 4. Preparar Node.js v18 para SCA
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      # 5. Instalar dependencias ci
+      - name: Install dependencies
+        run: npm ci
+
+      # 6. Generar reporte HTML de SCA 
+      - name: Generar reporte HTML SCA
+        run: |
+          npm audit --json | npx npm-audit-html@beta --output Reporte_FINAL_SCA.html || true
+          echo "=== Archivo generado SCA HTML ==="
+          ls -la Reporte_FINAL_SCA.html
+      - name: Publicar reporte SCA
+        uses: actions/upload-artifact@v2
+        with:
+          name: sca-audit-report
+          path: Reporte_FINAL_SCA.html
+
+      # 7. SCA - npm audit 
+      - name: SCA - npm audit (falla si hay vulnerabilidades medias o mayores)
+        run: npm audit --audit-level=moderate
