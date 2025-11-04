@@ -1,8 +1,17 @@
-name: CI DevSecOps Movies
+name: CI DevSecOps Movies (Paso 1)
 
 on:
   push:
     branches: [ "feature-pipeline-seguro" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Echo
+        run: echo "Pipeline iniciado - Paso 1"
 
