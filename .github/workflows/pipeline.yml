@@ -23,7 +23,7 @@ jobs:
       - name: Validando existencia de Proyecto en Sonarcloud
         id: validateProjectSonar
         run: |
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=DValMen' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=diegovalmen' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
           if [ $? -eq 0 ]; then
             echo "Proyecto creado o ya existe en SonarCloud"
             curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
