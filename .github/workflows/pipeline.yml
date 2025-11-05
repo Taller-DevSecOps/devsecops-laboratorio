@@ -70,3 +70,6 @@ jobs:
       - name: SCA - npm audit (falla si hay vulnerabilidades)
         run: npm audit --audit-level=moderate
         
+      # 8. Imagen Docker
+      - name: Construcción de imagen Docker
+        run: docker build -t movies-app:latest .
