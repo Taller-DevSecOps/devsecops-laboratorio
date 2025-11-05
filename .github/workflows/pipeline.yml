@@ -54,4 +54,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-        
+        # 6. Generar y publicar reporte HTML de SCA (no falla el pipeline)
+      - name: Generar reporte HTML SCA
+        run: |
+          npm audit --json | npx npm-audit-html@beta --output ReporteSCA.html || true
+          echo "=== Archivos generados ==="
+          ls -la ReporteSCA.html
+      - name: Publicar reporte SCA
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-audit-report
+          path: ReporteSCA.html
