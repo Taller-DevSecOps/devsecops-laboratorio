@@ -90,3 +90,11 @@ jobs:
         run: |
           trivy image --format template --template "@.github/trivy/html.tpl" --output trivy-report.html movies-app:latest
           echo "Reporte HTML de Trivy generado con éxito."
+          
+ # 11. Publicar reporte Trivy HTML 
+      - name: Publicar reporte Trivy HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-html-report
+          path: trivy-report.html
