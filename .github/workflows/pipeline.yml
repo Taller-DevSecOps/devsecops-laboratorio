@@ -19,7 +19,7 @@ jobs:
           echo "::notice title=Clonación Exitosa::Repositorio ${{ github.repository }} clonado correctamente"
           echo "Iniciando pipeline DevSecOps ${{ github.event.repository.name }}"
           
-        # 2. Validar  proyecto en SonarCloud
+        # 2. Validar proyecto en SonarCloud
       - name: Validando existencia de Proyecto en Sonarcloud
         id: validateProjectSonar
         run: |
@@ -31,6 +31,7 @@ jobs:
             echo "Error al crear el proyecto en SonarCloud"
             exit 1
           fi
+          
       # 3. Análisis SonarCloud SAST
       - name: Analisis SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
@@ -42,3 +43,15 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
         continue-on-error: true
+        
+       # 4. Node.js para SCA
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+        # 5. Dependencias
+      - name: Install dependencies
+        run: npm ci
+
+        
