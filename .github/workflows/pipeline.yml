@@ -10,7 +10,7 @@ jobs:
   JTRPipeline:
     runs-on: ubuntu-latest
     steps:
-      # 1. Clonación de repositorio
+# 1. Clonación de repositorio
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -19,7 +19,7 @@ jobs:
           echo "::notice title=Clonación Exitosa::Repositorio ${{ github.repository }} clonado correctamente"
           echo "Iniciando pipeline DevSecOps ${{ github.event.repository.name }}"
           
-        # 2. Validar proyecto en SonarCloud
+# 2. Validar proyecto en SonarCloud
       - name: Validando existencia de Proyecto en Sonarcloud
         id: validateProjectSonar
         run: |
@@ -32,7 +32,7 @@ jobs:
             exit 1
           fi
           
-      # 3. Análisis SonarCloud SAST
+# 3. Análisis SonarCloud SAST
       - name: Analisis SonarCloud
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -44,17 +44,17 @@ jobs:
             -Dsonar.qualitygate.timeout=300
         continue-on-error: true
         
-       # 4. Node.js para SCA
+# 4. Node.js para SCA
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-        # 5. Dependencias
+# 5. Dependencias
       - name: Install dependencies
         run: npm ci
 
-        # 6. Generar y publicar reporte HTML de SCA (no falla el pipeline)
+# 6. Generar y publicar reporte HTML de SCA (no falla el pipeline)
       - name: Generar reporte HTML SCA
         run: |
           npm audit --json | npx npm-audit-html@beta --output ReporteSCA.html || true
@@ -66,10 +66,20 @@ jobs:
           name: sca-audit-report
           path: ReporteSCA.html
           
-      # 7. SCA (falla si hay vulnerabilidades, sin continue-on-error)
+# 7. SCA (falla si hay vulnerabilidades, sin continue-on-error)
       - name: SCA - npm audit (falla si hay vulnerabilidades)
         run: npm audit --audit-level=moderate
         
-      # 8. Imagen Docker
+# 8. Imagen Docker
       - name: Construcción de imagen Docker
         run: docker build -t movies-app:latest .
+
+# 9. Escaner con Trivy (falla si hay vulnerabilidad) 
+      - name: Escaneo de imagen con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: movies-app:latest
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 1
+          format: table
+          ignore-unfixed: false
