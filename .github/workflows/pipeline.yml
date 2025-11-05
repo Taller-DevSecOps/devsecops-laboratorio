@@ -65,3 +65,8 @@ jobs:
         with:
           name: sca-audit-report
           path: ReporteSCA.html
+          
+      # 7. SCA (falla si hay vulnerabilidades, sin continue-on-error)
+      - name: SCA - npm audit (falla si hay vulnerabilidades)
+        run: npm audit --audit-level=moderate
+        
