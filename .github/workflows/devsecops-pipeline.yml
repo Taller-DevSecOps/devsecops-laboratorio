@@ -1,0 +1,79 @@
+# Nombre del workflow, visible en la pestaña "Actions" de GitHub
+name: DevSecOps Pipeline para la célula Movies
+
+# Define cuándo se ejecutará el pipeline
+on:
+  push:
+    branches: [ "main" ] # Se activa al hacer push a la rama main
+  pull_request:
+    branches: [ "main" ] # Se activa al crear un Pull Request hacia main
+
+# Define los trabajos (jobs) del pipeline
+jobs:
+  security-pipeline:
+    # El tipo de máquina virtual donde se ejecutará el job
+    runs-on: ubuntu-latest
+
+    # Pasos (etapas) que se ejecutarán en orden
+    steps:
+      # --- ETAPA 1: CLONACIÓN DEL REPOSITORIO ---
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          # Clona todo el historial. Es necesario para que SonarCloud pueda diferenciar código nuevo de antiguo.
+          fetch-depth: 0
+
+      # Configuración de Java 11. Necesario para Maven y Dependency-Check
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+
+      # --- ETAPA 2: EJECUTAR SAST (Static Application Security Testing) ---
+      - name: SonarCloud Scan (SAST)
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Token de GitHub, necesario para decorar Pull Requests
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # El token creado para validarse en SonarCloud
+        with:
+          # En esta etapa el pipeline espera el resultado del Quality Gate de SonarCloud. Si el Quality Gate falla, este paso falla.
+          args: >
+            -Dsonar.qualitygate.wait=true
+
+      # --- ETAPA 3: EJECUTAR SCA (Software Composition Analysis) ---
+      - name: Dependency-Check Scan (SCA)
+        # Se ejecuta el plugin de Maven de OWASP. La configuración de fallo se hará en el archivo pom.xml para más control.
+        run: mvn org.owasp:dependency-check-maven:8.4.0:check
+
+      # --- ETAPA 4: CONSTRUCCIÓN DE LA IMAGEN DOCKER ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Autenticación con el registro de contenedores de GitHub (ghcr.io)
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Nombre de usuario de GitHub
+          password: ${{ secrets.GITHUB_TOKEN }} # Token automático de GitHub
+
+      # Construye la imagen y la sube al registro de GitHub
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/devsecops-laboratorio:latest
+
+      # --- ETAPA 5: IMAGE SECURITY ---
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ghcr.io/${{ github.repository_owner }}/devsecops- laboratorio:latest'
+          format: 'table'
+          # Condición de fallo: Falla el pipeline (exit-code: 1) si encuentra vulnerabilidades de las severidades especificadas.
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH,MEDIUM'
