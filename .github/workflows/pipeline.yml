@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-# 6. Generar y publicar reporte HTML de SCA (no falla el pipeline)
+# 6. Generar y publicar reporte HTML de SCA 
       - name: Generar reporte HTML SCA
         run: |
           npm audit --json | npx npm-audit-html@beta --output ReporteSCA.html || true
@@ -66,7 +66,7 @@ jobs:
           name: sca-audit-report
           path: ReporteSCA.html
           
-# 7. SCA (falla si hay vulnerabilidades, sin continue-on-error)
+# 7. SCA
       - name: SCA - npm audit (falla si hay vulnerabilidades)
         run: npm audit --audit-level=moderate
         
@@ -74,7 +74,7 @@ jobs:
       - name: Construcción de imagen Docker
         run: docker build -t movies-app:latest .
 
-# 9. Escaner con Trivy (falla si hay vulnerabilidad) 
+# 9. Escaner con Trivy 
       - name: Escaneo de imagen con Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -83,3 +83,10 @@ jobs:
           exit-code: 1
           format: table
           ignore-unfixed: false
+          
+# 10. Generar reporte HTML Trivy usando plantilla local
+      - name: Generar reporte HTML de Trivy
+        if: always()
+        run: |
+          trivy image --format template --template "@.github/trivy/html.tpl" --output trivy-report.html movies-app:latest
+          echo "Reporte HTML de Trivy generado con éxito."
