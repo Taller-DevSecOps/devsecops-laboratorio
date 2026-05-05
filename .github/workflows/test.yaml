@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  workflow_call:
+  push:
+  pull_request: 
+permissions:
+  security-events: write
+  packages: read
+  actions: read
+  contents: read
+jobs:
+  
+  SAST:
+    runs-on: ubuntu-latest
+    name: SCA
+    steps:   
+    
+      - name: Git Clone
+        uses: actions/checkout@v4
+
+      - uses: OWASP/cve-lite-cli@v1
+        with:
+          verbose: "true"
+          fail-on: high
+      
