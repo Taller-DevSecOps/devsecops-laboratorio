@@ -1,0 +1,101 @@
+# DevSecOps Tarea Final -Diego Valdes
+name:   DevSecOps - CICD
+
+on:
+  push:
+    branches:
+      - feature-devsecops
+
+jobs:
+  JTRPipeline:
+    runs-on: ubuntu-latest
+    steps:
+# 1. Clonación de repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Repositorio clonado
+        run: |
+          echo "::notice title=Clonación Exitosa::Repositorio ${{ github.repository }} clonado correctamente"
+          echo "Iniciando pipeline DevSecOps ${{ github.event.repository.name }}"
+          
+# 2. Validar proyecto en SonarCloud
+      - name: Validando existencia de Proyecto en Sonarcloud
+        id: validateProjectSonar
+        run: |
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'organization=diegovalmen' -d 'project=${{github.event.repository.name}}' -d 'visibility=public'
+          if [ $? -eq 0 ]; then
+            echo "Proyecto creado o ya existe en SonarCloud"
+            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+          else
+            echo "Error al crear el proyecto en SonarCloud"
+            exit 1
+          fi
+          
+# 3. Análisis SonarCloud SAST
+      - name: Analisis SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: |
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+        continue-on-error: true
+        
+# 4. Node.js para SCA
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+# 5. Dependencias
+      - name: Install dependencies
+        run: npm ci
+
+# 6. Generar y publicar reporte HTML de SCA 
+      - name: Generar reporte HTML SCA
+        run: |
+          npm audit --json | npx npm-audit-html@beta --output ReporteSCA.html || true
+          echo "=== Archivos generados ==="
+          ls -la ReporteSCA.html
+      - name: Publicar reporte SCA
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-audit-report
+          path: ReporteSCA.html
+          
+# 7. SCA
+      - name: SCA - npm audit (falla si hay vulnerabilidades)
+        run: npm audit --audit-level=moderate
+        
+# 8. Imagen Docker
+      - name: Construcción de imagen Docker
+        run: docker build -t movies-app:latest .
+
+# 9. Escaner con Trivy 
+      - name: Escaneo de imagen con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: movies-app:latest
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 1
+          format: table
+          ignore-unfixed: false
+          
+# 10. Generar reporte HTML Trivy usando plantilla local
+      - name: Generar reporte HTML de Trivy
+        if: always()
+        run: |
+          trivy image --format template --template "@.github/trivy/html.tpl" --output trivy-report.html movies-app:latest
+          echo "Reporte HTML de Trivy generado con éxito."
+          
+ # 11. Publicar reporte Trivy HTML 
+      - name: Publicar reporte Trivy HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-html-report
+          path: trivy-report.html
+          
