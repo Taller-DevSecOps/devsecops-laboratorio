@@ -1,0 +1,32 @@
+name: CI DevSecOps
+
+on:
+  push:
+    branches: ["ci-devsecops", "main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  devsecops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 1: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t devsecops-app:latest .
+
+      # Step 2: Image Security Scan with Trivy
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'devsecops-app:latest'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '1'
